@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
+import { getAuth, signInWithEmailAndPassword } from 'firebase/auth'
+import RecipeContext from '../context/recipeContext';
 import {
   ChevronLeft,
   ChevronRight,
@@ -9,6 +11,8 @@ import {
   Visibility,
   VisibilityOff,
 } from '@mui/icons-material';
+import { useRouter } from 'next/router';
+import { toast } from 'react-toastify';
 
 const SignIn = () => {
   const [ formData, setFormData ] = useState({
@@ -18,6 +22,10 @@ const SignIn = () => {
 
   const { email, password } = formData
   const [visible, setVisible] = useState(false);
+  const router = useRouter()
+  const recipeContext = useContext(RecipeContext)
+
+  const { dispatch } = recipeContext
 
   const onChange = (e) => {
     setFormData((prevState) => ({
@@ -29,6 +37,28 @@ const SignIn = () => {
   const showPassword = () => {
     setVisible(!visible);
   };
+
+  const onSubmit = async (e) => {
+    e.preventDefault()
+
+    try {
+      const auth = getAuth()
+      
+      const userCred = await signInWithEmailAndPassword(auth, email, password)
+      
+      const user = userCred.user
+      
+      if(user){
+        console.log('submitted')
+        dispatch({type: 'LOGIN_USER', payload: user})
+        router.push('/')
+      }
+
+    } catch (err) {
+      console.log(err)
+      toast.error('Wrong User Credentials')
+    }
+  }
   return (
     <div className="landing-img h-screen w-screen font-new">
       <Head>
@@ -41,13 +71,13 @@ const SignIn = () => {
       </Head>
       <div className="flex p-5 text-gray-800">
         <div className="md:w-[400px]"></div>
-        <div className="w-full md:ml-40 flex-grow">
+        <div className="w-full md:ml-40 lg:ml-60 flex-grow">
           <header className="p-3">
             <h2 className="font-extrabold text-3xl">Welcome Back</h2>
           </header>
 
           <main className="mt-3 p-2">
-            <form>
+            <form onSubmit={onSubmit}>
               <div className="w-full flex gap-2 px-2 items-center md:w-[500px] bg-white rounded-lg shadow-lg hover:shadow-none border-2 border-gray-200 mb-6">
                 <Mail fontSize="small" />
                 <input
@@ -107,7 +137,7 @@ const SignIn = () => {
                   <ChevronLeft className="text-white" />
                 </a>
               </Link>
-              <p className="text-red-500 text-sm font-bold">Back home</p>
+              <p className="text-gray-800 text-sm font-bold">Back home</p>
             </div>
 
             <div className="flex justify-center items-center w-full md:w-[500px] mt-9">
